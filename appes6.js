@@ -57,6 +57,54 @@ class UI {
     }
 }
 
+// Local Storage Class
+class Store {
+    // Get the books from local storage to be displayed
+    static getBooks() {
+        let books;
+        if(localStorage.getItem('books') === null) {
+            books = [];
+        } else {
+            books = JSON.parse(localStorage.getItem('books'));
+        }
+        return books;
+    }
+    
+    // Display the books from local storage
+    static displayBooks() {
+        const books = Store.getBooks();
+        books.forEach(function(book){
+            const ui = new UI;
+
+            // Add book to UI
+            ui.addBookToList(book);
+        });
+    }
+
+    // Add a new book to local storage
+    static addBook(book) {
+        const books = Store.getBooks();
+
+        books.push(book);
+
+        localStorage.setItem('books', JSON.stringify(books));
+
+    }
+
+    // Remove a book from local storage
+    static removeBook(isbn) {
+        const books = Store.getBooks();
+        books.forEach(function(book, index){
+            if(book.isbn === isbn) {
+                books.splice(index, 1);
+            }
+        });
+        
+        localStorage.setItem('books', JSON.stringify(books));
+
+    }
+}
+
 
 // This function is needed to sanitize the input from the user. Otherwise they can change the mark up and allows for XSS.
 var sanitizeHTML = function (str) {
@@ -66,6 +114,9 @@ var sanitizeHTML = function (str) {
 };
 
 // Event Listeners
+
+// DOM Load event for persistant local storage of books
+document.addEventListener('DOMContentLoaded', Store.displayBooks);
 
 // Event listener for add book
 // Gets the form values
@@ -88,6 +139,8 @@ document.getElementById('book-form').addEventListener('submit', function(e){
 
     // Add book to list
     ui.addBookToList(book);
+    // Add to local storage - dont need to instantiate because its a static method
+    Store.addBook(book)
     
     // Show success validation
     ui.showAlert('Book added!', 'success')
@@ -107,7 +160,11 @@ document.getElementById('book-list').addEventListener('click', function(e){
     // Instantiate UI
     const ui = new UI();
 
+    // Delete book
     ui.deleteBook(e.target);
+
+    // Remove from local storage
+    Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
 
     // Show a message after we delete a book.
     ui.showAlert('Book deleted!', 'success'); 
